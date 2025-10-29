@@ -1,0 +1,17 @@
+name = "jrpg-stats-api"
+main = "api/src/index.ts"
+compatibility_date = "2024-10-29"
+compatibility_flags = ["nodejs_compat"]
+
+# Development configuration
+[env.development]
+name = "jrpg-stats-api-dev"
+
+# Production configuration
+[env.production]
+name = "jrpg-stats-api"
+workers_dev = true
+
+# Optional: Configure observability
+[observability]
+enabled = true

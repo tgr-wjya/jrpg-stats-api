@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-debug.log*
+.npm
+
+# TypeScript
+*.tsbuildinfo
+dist/
+
+# Cloudflare Workers
+.wrangler/
+wrangler.toml.bak
+.dev.vars
+
+# Azure Functions (legacy - can be removed if fully migrated)
+local.settings.json
+.azure/
+.funcignore
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+*.lcov
+
+# Logs
+*.log
+logs/
+
+# Build
+build/
+out/
+
+# Test files
+test-request.json
