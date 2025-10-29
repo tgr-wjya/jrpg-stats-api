@@ -2,21 +2,23 @@ import {
   Character,
   CharacterClass,
   DamageCalculationRequest,
-  DamageCalculationResult,
-  Element
+  DamageCalculationResult
 } from '../../models/Character';
 import { getCharacterById } from '../db';
 import type { Env } from '../types';
 
 // Element effectiveness matrix (attacker -> defender)
-const ELEMENT_MATRIX: Record<Element, Record<Element, number>> = {
-  FIRE: { FIRE: 0.5, ICE: 2.0, LIGHTNING: 1.0, EARTH: 1.5, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0 },
-  ICE: { FIRE: 0.5, ICE: 0.5, LIGHTNING: 1.5, EARTH: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0 },
-  LIGHTNING: { FIRE: 1.0, ICE: 1.5, LIGHTNING: 0.5, EARTH: 0.5, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0 },
-  EARTH: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 2.0, EARTH: 0.5, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0 },
-  HOLY: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, HOLY: 0.5, DARK: 2.0, NEUTRAL: 1.0 },
-  DARK: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, HOLY: 2.0, DARK: 0.5, NEUTRAL: 1.0 },
-  NEUTRAL: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0 }
+const ELEMENT_MATRIX: Record<string, Record<string, number>> = {
+  FIRE: { FIRE: 0.5, ICE: 2.0, LIGHTNING: 1.0, EARTH: 1.5, WATER: 0.5, WIND: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0, LIGHT: 1.0 },
+  ICE: { FIRE: 0.5, ICE: 0.5, LIGHTNING: 1.5, EARTH: 1.0, WATER: 1.5, WIND: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0, LIGHT: 1.0 },
+  LIGHTNING: { FIRE: 1.0, ICE: 1.5, LIGHTNING: 0.5, EARTH: 0.5, WATER: 2.0, WIND: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0, LIGHT: 1.0 },
+  EARTH: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 2.0, EARTH: 0.5, WATER: 1.0, WIND: 0.5, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0, LIGHT: 1.0 },
+  WATER: { FIRE: 2.0, ICE: 1.0, LIGHTNING: 0.5, EARTH: 1.0, WATER: 0.5, WIND: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0, LIGHT: 1.0 },
+  WIND: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 2.0, WATER: 1.0, WIND: 0.5, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0, LIGHT: 1.0 },
+  HOLY: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, WATER: 1.0, WIND: 1.0, HOLY: 0.5, DARK: 2.0, NEUTRAL: 1.0, LIGHT: 0.5 },
+  LIGHT: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, WATER: 1.0, WIND: 1.0, HOLY: 0.5, DARK: 2.0, NEUTRAL: 1.0, LIGHT: 0.5 },
+  DARK: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, WATER: 1.0, WIND: 1.0, HOLY: 2.0, DARK: 0.5, NEUTRAL: 1.0, LIGHT: 2.0 },
+  NEUTRAL: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, WATER: 1.0, WIND: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0, LIGHT: 1.0 }
 };
 
 // Removed mock getCharacterById; use D1 via db.ts
@@ -38,8 +40,11 @@ function calculateDamage(
   const levelDiff = attacker.level - defender.level;
   const levelModifier = 1 + (levelDiff * 0.02);
 
-  // Elemental effectiveness
-  const elementalModifier = ELEMENT_MATRIX[attacker.element][defender.element];
+  // Elemental effectiveness with safety fallback
+  const attackerElement = String(attacker.element).toUpperCase();
+  const defenderElement = String(defender.element).toUpperCase();
+  const elementalModifier =
+    ELEMENT_MATRIX[attackerElement]?.[defenderElement] ?? 1.0;
   const elementalBonus = baseDamage * (elementalModifier - 1);
 
   // Defense calculation: (Defender VIT * 0.8) + (Defender Level * 0.5)
