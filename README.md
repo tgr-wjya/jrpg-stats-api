@@ -250,3 +250,42 @@ MIT License - feel free to use in your projects!
 ---
 
 **Built with ❤️ for JRPG enthusiasts and backend engineers**
+
+---
+
+## Friend Commemoration Feature (Backend)
+
+This API now supports creating friend characters, tracking battles, and commemorating approved characters in a public Hall of Heroes, backed by Cloudflare D1.
+
+### D1 Setup
+
+1. Create the database and update `wrangler.toml` with the generated database_id.
+2. Apply `schema.sql` locally and remotely.
+
+Common commands (run from repo root):
+
+```bash
+# Create D1 database
+npx wrangler d1 create jrpg-characters
+
+# Apply schema locally
+npx wrangler d1 execute jrpg-characters --file=./schema.sql --local
+
+# Apply schema remote
+npx wrangler d1 execute jrpg-characters --file=./schema.sql --remote
+
+# Set admin password secret for production
+npx wrangler secret put ADMIN_PASSWORD
+```
+
+### New Endpoints
+
+- POST /api/Characters — Create character (returns verificationCode)
+- POST /api/CalculateDamage — Calculate and record a battle (now persists)
+- GET /api/Characters/heroes — List locked characters
+- GET /api/Battles — List recent battles (optional `?characterId=&limit=`)
+- GET /api/admin/Characters/pending — Admin list pending (Auth required)
+- POST /api/admin/Characters/:id/approve — Admin approve (Auth required)
+- DELETE /api/admin/Characters/:id — Admin reject (Auth required)
+
+Authorization header for admin endpoints: `Authorization: Bearer <ADMIN_PASSWORD>`

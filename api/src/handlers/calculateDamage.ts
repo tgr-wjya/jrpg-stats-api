@@ -1,10 +1,12 @@
 import {
-    Character,
-    CharacterClass,
-    DamageCalculationRequest,
-    DamageCalculationResult,
-    Element
+  Character,
+  CharacterClass,
+  DamageCalculationRequest,
+  DamageCalculationResult,
+  Element
 } from '../../models/Character';
+import { getCharacterById } from '../db';
+import type { Env } from '../types';
 
 // Element effectiveness matrix (attacker -> defender)
 const ELEMENT_MATRIX: Record<Element, Record<Element, number>> = {
@@ -17,60 +19,7 @@ const ELEMENT_MATRIX: Record<Element, Record<Element, number>> = {
   NEUTRAL: { FIRE: 1.0, ICE: 1.0, LIGHTNING: 1.0, EARTH: 1.0, HOLY: 1.0, DARK: 1.0, NEUTRAL: 1.0 }
 };
 
-function getCharacterById(id: string): Character | null {
-  // Mock implementation - replace with actual data source
-  const mockCharacters: Character[] = [
-    {
-      id: '1',
-      name: 'Cloud Strife',
-      class: CharacterClass.WARRIOR,
-      level: 50,
-      baseStats: {
-        hp: 4500,
-        mp: 250,
-        strength: 95,
-        intelligence: 45,
-        dexterity: 75,
-        vitality: 85,
-        luck: 60
-      },
-      element: Element.NEUTRAL,
-      equipment: {
-        weapon: 'Buster Sword',
-        armor: 'Soldier Armor',
-        accessory: 'Champion Belt'
-      },
-      skills: ['Cross-Slash', 'Braver', 'Omnislash'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: '2',
-      name: 'Vivi Ornitier',
-      class: CharacterClass.MAGE,
-      level: 48,
-      baseStats: {
-        hp: 2800,
-        mp: 850,
-        strength: 35,
-        intelligence: 120,
-        dexterity: 55,
-        vitality: 45,
-        luck: 70
-      },
-      element: Element.FIRE,
-      equipment: {
-        weapon: 'Mace of Zeus',
-        armor: 'Black Robe',
-        accessory: 'Magic Armlet'
-      },
-      skills: ['Fire', 'Fira', 'Firaga', 'Flare'],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ];
-  return mockCharacters.find(c => c.id === id) || null;
-}
+// Removed mock getCharacterById; use D1 via db.ts
 
 function calculateDamage(
   attacker: Character,
@@ -122,7 +71,8 @@ function calculateDamage(
 
 export async function calculateDamageHandler(
   request: Request,
-  corsHeaders: Record<string, string>
+  corsHeaders: Record<string, string>,
+  env: Env
 ): Promise<Response> {
   try {
     const body: DamageCalculationRequest = await request.json() as DamageCalculationRequest;
@@ -140,8 +90,8 @@ export async function calculateDamageHandler(
       );
     }
 
-    const attacker = getCharacterById(body.attackerId);
-    const defender = getCharacterById(body.defenderId);
+  const attacker = await getCharacterById(env, body.attackerId);
+  const defender = await getCharacterById(env, body.defenderId);
 
     if (!attacker || !defender) {
       return new Response(
@@ -162,11 +112,26 @@ export async function calculateDamageHandler(
 
     const result = calculateDamage(attacker, defender, isCritical);
 
+    // Save battle history
+    const breakdown = JSON.stringify(result.breakdown);
+    const insertStmt = env.DB.prepare(
+      `INSERT INTO battle_history (attacker_id, defender_id, final_damage, is_critical, breakdown)
+       VALUES (?1, ?2, ?3, ?4, ?5)`
+    ).bind(attacker.id, defender.id, result.finalDamage, isCritical ? 1 : 0, breakdown);
+    const insertRes = await insertStmt.run();
+    const battleId = insertRes.meta.last_row_id as number;
+
+    // Update attacker battle stats
+    await env.DB.prepare(
+      `UPDATE characters SET total_battles = COALESCE(total_battles, 0) + 1, last_battle_at = CURRENT_TIMESTAMP WHERE id = ?1`
+    ).bind(attacker.id).run();
+
     return new Response(
       JSON.stringify({
         attacker: { id: attacker.id, name: attacker.name, level: attacker.level },
         defender: { id: defender.id, name: defender.name, level: defender.level },
-        result
+        result,
+        battleId
       }),
       {
         status: 200,

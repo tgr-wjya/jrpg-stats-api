@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JRPG Stats API - Test Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .api-url-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .api-url-section label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        #apiBaseUrl {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .badge-get {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-post {
+            background: #007bff;
+            color: white;
+        }
+
+        .badge-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .response-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .response-box h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .response-box pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .quick-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 JRPG Stats API - Test Interface</h1>
+            <p>Test all your API endpoints in one place. No Postman required!</p>
+
+            <div class="api-url-section">
+                <label for="apiBaseUrl">API Base URL:</label>
+                <input type="text" id="apiBaseUrl" value="http://localhost:8787"
+                       placeholder="http://localhost:8787 or https://your-worker.workers.dev">
+                <div class="helper-text">
+                    Use <code>http://localhost:8787</code> for local testing or your Cloudflare Workers URL for production
+                </div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- GET Characters -->
+            <div class="test-card">
+                <h2>
+                    <span class="badge badge-get">GET</span>
+                    Get Characters
+                </h2>
+
+                <div class="input-group">
+                    <label>Filter by Class (optional)</label>
+                    <select id="filterClass">
+                        <option value="">All Classes</option>
+                        <option value="WARRIOR">Warrior</option>
+                        <option value="MAGE">Mage</option>
+                        <option value="ROGUE">Rogue</option>
+                        <option value="CLERIC">Cleric</option>
+                        <option value="RANGER">Ranger</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Minimum Level (optional)</label>
+                    <input type="number" id="minLevel" placeholder="e.g., 45">
+                </div>
+
+                <div class="input-group">
+                    <label>Filter by Element (optional)</label>
+                    <select id="filterElement">
+                        <option value="">All Elements</option>
+                        <option value="FIRE">Fire</option>
+                        <option value="WATER">Water</option>
+                        <option value="WIND">Wind</option>
+                        <option value="EARTH">Earth</option>
+                        <option value="LIGHTNING">Lightning</option>
+                        <option value="ICE">Ice</option>
+                        <option value="LIGHT">Light</option>
+                        <option value="DARK">Dark</option>
+                        <option value="NEUTRAL">Neutral</option>
+                    </select>
+                </div>
+
+                <button onclick="getCharacters()">🔍 Get Characters</button>
+                <div id="getCharactersResponse" class="response-box" style="display: none;"></div>
+            </div>
+
+            <!-- Create Character -->
+            <div class="test-card">
+                <h2>
+                    <span class="badge badge-post">POST</span>
+                    Create Character
+                </h2>
+
+                <div class="quick-actions">
+                    <button onclick="loadSampleWarrior()">⚔️ Warrior</button>
+                    <button onclick="loadSampleMage()">🔮 Mage</button>
+                    <button onclick="loadSampleRogue()">🗡️ Rogue</button>
+                </div>
+
+                <div class="input-group">
+                    <label>Character JSON</label>
+                    <textarea id="createCharacterJson" placeholder='{"name": "Cloud", "class": "WARRIOR", ...}'></textarea>
+                    <div class="helper-text">Use quick actions above to load sample data</div>
+                </div>
+
+                <button onclick="createCharacter()">✨ Create Character</button>
+                <div id="createCharacterResponse" class="response-box" style="display: none;"></div>
+            </div>
+
+            <!-- Get Heroes -->
+            <div class="test-card">
+                <h2>
+                    <span class="badge badge-get">GET</span>
+                    Get Heroes (Locked)
+                </h2>
+                <p style="margin-bottom: 15px; color: #666;">Retrieve only locked/commemorated characters</p>
+
+                <button onclick="getHeroes()">🏆 Get Heroes</button>
+                <div id="getHeroesResponse" class="response-box" style="display: none;"></div>
+            </div>
+
+            <!-- Calculate Damage -->
+            <div class="test-card">
+                <h2>
+                    <span class="badge badge-post">POST</span>
+                    Calculate Damage
+                </h2>
+
+                <div class="input-group">
+                    <label>Attacker ID</label>
+                    <input type="text" id="attackerId" placeholder="e.g., 1 or cloud">
+                </div>
+
+                <div class="input-group">
+                    <label>Defender ID</label>
+                    <input type="text" id="defenderId" placeholder="e.g., 2 or sephiroth">
+                </div>
+
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="isCritical" style="width: auto; margin-right: 8px;">
+                        Critical Hit
+                    </label>
+                </div>
+
+                <button onclick="calculateDamage()">⚔️ Calculate Damage</button>
+                <div id="calculateDamageResponse" class="response-box" style="display: none;"></div>
+            </div>
+
+            <!-- Get Battles -->
+            <div class="test-card">
+                <h2>
+                    <span class="badge badge-get">GET</span>
+                    Battle History
+                </h2>
+
+                <div class="input-group">
+                    <label>Limit (optional)</label>
+                    <input type="number" id="battleLimit" placeholder="e.g., 10" value="10">
+                </div>
+
+                <button onclick="getBattles()">📜 Get Battle History</button>
+                <div id="getBattlesResponse" class="response-box" style="display: none;"></div>
+            </div>
+
+            <!-- Admin: Get Pending Characters -->
+            <div class="test-card" style="border: 2px solid #ffc107;">
+                <h2>
+                    <span class="badge badge-get">GET</span>
+                    Pending Characters (Admin)
+                </h2>
+                <p style="margin-bottom: 15px; color: #666;">Requires admin authentication</p>
+
+                <div class="input-group">
+                    <label>Admin Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter admin password">
+                </div>
+
+                <button onclick="getPendingCharacters()">👀 Get Pending</button>
+                <div id="getPendingResponse" class="response-box" style="display: none;"></div>
+            </div>
+
+            <!-- Admin: Approve Character -->
+            <div class="test-card" style="border: 2px solid #28a745;">
+                <h2>
+                    <span class="badge badge-post">POST</span>
+                    Approve Character (Admin)
+                </h2>
+
+                <div class="input-group">
+                    <label>Character ID to Approve</label>
+                    <input type="text" id="approveCharacterId" placeholder="e.g., abc123">
+                </div>
+
+                <div class="input-group">
+                    <label>Admin Password</label>
+                    <input type="password" id="approveAdminPassword" placeholder="Enter admin password">
+                </div>
+
+                <button onclick="approveCharacter()">✅ Approve Character</button>
+                <div id="approveResponse" class="response-box" style="display: none;"></div>
+            </div>
+
+            <!-- Admin: Delete Pending Character -->
+            <div class="test-card" style="border: 2px solid #dc3545;">
+                <h2>
+                    <span class="badge badge-delete">DELETE</span>
+                    Delete Pending (Admin)
+                </h2>
+
+                <div class="input-group">
+                    <label>Character ID to Delete</label>
+                    <input type="text" id="deleteCharacterId" placeholder="e.g., abc123">
+                </div>
+
+                <div class="input-group">
+                    <label>Admin Password</label>
+                    <input type="password" id="deleteAdminPassword" placeholder="Enter admin password">
+                </div>
+
+                <button onclick="deleteCharacter()">🗑️ Delete Character</button>
+                <div id="deleteResponse" class="response-box" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getApiBaseUrl() {
+            return document.getElementById('apiBaseUrl').value.trim().replace(/\/$/, '');
+        }
+
+        function showResponse(elementId, status, data) {
+            const element = document.getElementById(elementId);
+            const statusClass = status >= 200 && status < 300 ? 'status-success' : 'status-error';
+            const statusText = status >= 200 && status < 300 ? 'Success' : 'Error';
+
+            element.innerHTML = `
+                <span class="status-indicator ${statusClass}">Status: ${status} - ${statusText}</span>
+                <h3>Response:</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            element.style.display = 'block';
+        }
+
+        function showError(elementId, error) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <span class="status-indicator status-error">Error</span>
+                <h3>Error:</h3>
+                <pre>${error.message || error}</pre>
+            `;
+            element.style.display = 'block';
+        }
+
+        async function getCharacters() {
+            const baseUrl = getApiBaseUrl();
+            const classFilter = document.getElementById('filterClass').value;
+            const minLevel = document.getElementById('minLevel').value;
+            const element = document.getElementById('filterElement').value;
+
+            let url = `${baseUrl}/api/GetCharacters?`;
+            const params = [];
+            if (classFilter) params.push(`class=${classFilter}`);
+            if (minLevel) params.push(`minLevel=${minLevel}`);
+            if (element) params.push(`element=${element}`);
+            url += params.join('&');
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                showResponse('getCharactersResponse', response.status, data);
+            } catch (error) {
+                showError('getCharactersResponse', error);
+            }
+        }
+
+        async function createCharacter() {
+            const baseUrl = getApiBaseUrl();
+            const jsonData = document.getElementById('createCharacterJson').value;
+
+            try {
+                const body = JSON.parse(jsonData);
+                const response = await fetch(`${baseUrl}/api/Characters`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await response.json();
+                showResponse('createCharacterResponse', response.status, data);
+            } catch (error) {
+                showError('createCharacterResponse', error);
+            }
+        }
+
+        async function getHeroes() {
+            const baseUrl = getApiBaseUrl();
+
+            try {
+                const response = await fetch(`${baseUrl}/api/Characters/heroes`);
+                const data = await response.json();
+                showResponse('getHeroesResponse', response.status, data);
+            } catch (error) {
+                showError('getHeroesResponse', error);
+            }
+        }
+
+        async function calculateDamage() {
+            const baseUrl = getApiBaseUrl();
+            const attackerId = document.getElementById('attackerId').value;
+            const defenderId = document.getElementById('defenderId').value;
+            const isCritical = document.getElementById('isCritical').checked;
+
+            try {
+                const response = await fetch(`${baseUrl}/api/CalculateDamage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ attackerId, defenderId, isCritical })
+                });
+                const data = await response.json();
+                showResponse('calculateDamageResponse', response.status, data);
+            } catch (error) {
+                showError('calculateDamageResponse', error);
+            }
+        }
+
+        async function getBattles() {
+            const baseUrl = getApiBaseUrl();
+            const limit = document.getElementById('battleLimit').value;
+
+            try {
+                const url = limit ? `${baseUrl}/api/Battles?limit=${limit}` : `${baseUrl}/api/Battles`;
+                const response = await fetch(url);
+                const data = await response.json();
+                showResponse('getBattlesResponse', response.status, data);
+            } catch (error) {
+                showError('getBattlesResponse', error);
+            }
+        }
+
+        async function getPendingCharacters() {
+            const baseUrl = getApiBaseUrl();
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/api/admin/Characters/pending`, {
+                    headers: { 'Authorization': `Bearer ${password}` }
+                });
+                const data = await response.json();
+                showResponse('getPendingResponse', response.status, data);
+            } catch (error) {
+                showError('getPendingResponse', error);
+            }
+        }
+
+        async function approveCharacter() {
+            const baseUrl = getApiBaseUrl();
+            const characterId = document.getElementById('approveCharacterId').value;
+            const password = document.getElementById('approveAdminPassword').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/api/admin/Characters/${characterId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${password}` }
+                });
+                const data = await response.json();
+                showResponse('approveResponse', response.status, data);
+            } catch (error) {
+                showError('approveResponse', error);
+            }
+        }
+
+        async function deleteCharacter() {
+            const baseUrl = getApiBaseUrl();
+            const characterId = document.getElementById('deleteCharacterId').value;
+            const password = document.getElementById('deleteAdminPassword').value;
+
+            try {
+                const response = await fetch(`${baseUrl}/api/admin/Characters/${characterId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${password}` }
+                });
+                const data = await response.json();
+                showResponse('deleteResponse', response.status, data);
+            } catch (error) {
+                showError('deleteResponse', error);
+            }
+        }
+
+        // Sample data loaders
+        function loadSampleWarrior() {
+            document.getElementById('createCharacterJson').value = JSON.stringify({
+                "name": "Cloud Strife",
+                "class": "WARRIOR",
+                "element": "NEUTRAL",
+                "level": 50,
+                "baseStats": {
+                    "hp": 4500,
+                    "strength": 95,
+                    "magic": 45,
+                    "defense": 80,
+                    "resistance": 60,
+                    "speed": 70,
+                    "luck": 55
+                },
+                "equipment": {
+                    "weapon": "Buster Sword",
+                    "armor": "Soldier Uniform",
+                    "accessory": "Power Wrist"
+                },
+                "skills": ["Cross-Slash", "Braver", "Climhazzard"]
+            }, null, 2);
+        }
+
+        function loadSampleMage() {
+            document.getElementById('createCharacterJson').value = JSON.stringify({
+                "name": "Vivi Ornitier",
+                "class": "MAGE",
+                "element": "FIRE",
+                "level": 48,
+                "baseStats": {
+                    "hp": 2800,
+                    "strength": 30,
+                    "magic": 110,
+                    "defense": 45,
+                    "resistance": 90,
+                    "speed": 55,
+                    "luck": 60
+                },
+                "equipment": {
+                    "weapon": "Oak Staff",
+                    "armor": "Mage Robe",
+                    "accessory": "Magic Ring"
+                },
+                "skills": ["Firaga", "Thundaga", "Blizzaga", "Meteor"]
+            }, null, 2);
+        }
+
+        function loadSampleRogue() {
+            document.getElementById('createCharacterJson').value = JSON.stringify({
+                "name": "Locke Cole",
+                "class": "ROGUE",
+                "element": "WIND",
+                "level": 46,
+                "baseStats": {
+                    "hp": 3500,
+                    "strength": 75,
+                    "magic": 50,
+                    "defense": 60,
+                    "resistance": 55,
+                    "speed": 95,
+                    "luck": 85
+                },
+                "equipment": {
+                    "weapon": "Thief's Knife",
+                    "armor": "Leather Armor",
+                    "accessory": "Thief's Glove"
+                },
+                "skills": ["Steal", "Mug", "Sneak Attack", "Backstab"]
+            }, null, 2);
+        }
+    </script>
+</body>
+</html>

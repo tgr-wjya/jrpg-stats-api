@@ -3,6 +3,16 @@ main = "api/src/index.ts"
 compatibility_date = "2024-10-29"
 compatibility_flags = ["nodejs_compat"]
 
+# D1 database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "jrpg-stats-db"
+database_id = "4f516a8c-a239-492a-a48b-032a4f054849"
+
+# Vars (set ADMIN_PASSWORD via wrangler secret in production)
+[vars]
+ADMIN_PASSWORD = "dev-admin-password"
+
 # Development configuration
 [env.development]
 name = "jrpg-stats-api-dev"

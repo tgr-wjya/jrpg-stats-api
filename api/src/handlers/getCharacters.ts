@@ -1,60 +1,10 @@
-import { Character, CharacterClass, Element } from '../../models/Character';
-
-// In-memory mock data (replace with KV storage or D1 database later)
-const mockCharacters: Character[] = [
-  {
-    id: '1',
-    name: 'Cloud Strife',
-    class: CharacterClass.WARRIOR,
-    level: 50,
-    baseStats: {
-      hp: 4500,
-      mp: 250,
-      strength: 95,
-      intelligence: 45,
-      dexterity: 75,
-      vitality: 85,
-      luck: 60
-    },
-    element: Element.NEUTRAL,
-    equipment: {
-      weapon: 'Buster Sword',
-      armor: 'Soldier Armor',
-      accessory: 'Champion Belt'
-    },
-    skills: ['Cross-Slash', 'Braver', 'Omnislash'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'Vivi Ornitier',
-    class: CharacterClass.MAGE,
-    level: 48,
-    baseStats: {
-      hp: 2800,
-      mp: 850,
-      strength: 35,
-      intelligence: 120,
-      dexterity: 55,
-      vitality: 45,
-      luck: 70
-    },
-    element: Element.FIRE,
-    equipment: {
-      weapon: 'Mace of Zeus',
-      armor: 'Black Robe',
-      accessory: 'Magic Armlet'
-    },
-    skills: ['Fire', 'Fira', 'Firaga', 'Flare'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
+import { mapRowToCharacter } from '../db';
+import type { Env } from '../types';
 
 export async function getCharactersHandler(
   request: Request,
-  corsHeaders: Record<string, string>
+  corsHeaders: Record<string, string>,
+  env: Env
 ): Promise<Response> {
   try {
     const url = new URL(request.url);
@@ -64,32 +14,45 @@ export async function getCharactersHandler(
     const minLevel = url.searchParams.get('minLevel');
     const element = url.searchParams.get('element');
 
-    let filteredCharacters = [...mockCharacters];
+    // Build SQL query with filters
+    let query = 'SELECT * FROM characters WHERE is_pending = 0';
+    const bindings: any[] = [];
+    let bindIndex = 1;
 
-    // Apply filters
     if (classFilter) {
-      filteredCharacters = filteredCharacters.filter(
-        c => c.class.toLowerCase() === classFilter.toLowerCase()
-      );
+      query += ` AND UPPER(class) = ?${bindIndex}`;
+      bindings.push(classFilter.toUpperCase());
+      bindIndex++;
     }
 
     if (minLevel) {
       const levelThreshold = parseInt(minLevel, 10);
       if (!isNaN(levelThreshold)) {
-        filteredCharacters = filteredCharacters.filter(c => c.level >= levelThreshold);
+        query += ` AND level >= ?${bindIndex}`;
+        bindings.push(levelThreshold);
+        bindIndex++;
       }
     }
 
     if (element) {
-      filteredCharacters = filteredCharacters.filter(
-        c => c.element.toLowerCase() === element.toLowerCase()
-      );
+      query += ` AND UPPER(element) = ?${bindIndex}`;
+      bindings.push(element.toUpperCase());
+      bindIndex++;
     }
+
+    query += ' ORDER BY level DESC, name ASC';
+
+    // Execute query
+    const stmt = env.DB.prepare(query);
+    const result = await stmt.bind(...bindings).all();
+
+    // Map rows to Character objects
+    const characters = (result.results || []).map(row => mapRowToCharacter(row));
 
     return new Response(
       JSON.stringify({
-        count: filteredCharacters.length,
-        characters: filteredCharacters
+        count: characters.length,
+        characters: characters
       }),
       {
         status: 200,
